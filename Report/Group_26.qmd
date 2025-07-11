@@ -1,0 +1,236 @@
+---
+title: "MTH-208A Project Report"
+format: html
+editor: visual
+---
+
+## 1. Introduction
+
+This report presents an analysis and visualization tool developed using Shiny, an R package for building interactive web applications. The focus of this Shiny app is to explore and summarize data from the Olympic Games, providing an accessible platform for analyzing key statistics, trends, and performance insights across different sports, countries, and years.
+
+The Olympic Games hold a significant place in global sports history, showcasing the peak of human athletic achievement and fostering international competition. This app allows users to delve into detailed data, such as medals won by each country and specific sports over the years. Key functionalities include visualizing trends in medal distribution, comparing top-performing nations, and filtering data based on seasonal variations like the Summer and Winter Olympics.
+
+Through an interactive interface, users can dynamically engage with the data via plots, tables, and customizable widgets, offering an engaging, intuitive way to analyze historical Olympic records. The insights provided by this app aim to support deeper explorations of patterns within Olympic data, valuable for sports analysts, fans, and researchers alike.
+
+## 2. Data set information
+
+The App dataset was obtained in two parts. First, we gathered data on the Summer and Winter Olympics for various countries over the past ten years. The second part included information on the age, weight, and height of medal winners across different sports, it also contains GDP for countries. The variables in the dataset are as follows:
+
+#### 1. Name
+
+Contains the name of the athelete
+
+#### 2. Age
+
+contains the age of the atheletes
+
+#### 3. Height
+
+Contains the height of the atheletes
+
+#### 4. Team
+
+The country which the atheletes represents
+
+#### 5. Season
+
+Represents the olympic season (Summer or WInter)
+
+#### 6. Sport
+
+Name of the sport played by the athelete
+
+#### 7. Year
+
+Year of the olympic season
+
+#### 8. Event
+
+Particular events under a particular sport
+
+#### 9. GDP
+
+GDP for a particular country for the past ten years
+
+## 3. How did we obtain the data and what challenges we faced?
+
+We were fortunate to have access to publicly available data on sites like Kaggle and GitHub, from which we extracted the required datasets as CSV files. Initially, we attempted to scrape data from the official Olympic website, but this approach encountered errors when using libraries such as `rvest` and `tidyverse`.
+
+Subsequently, we explored other sources, including Olympedia.com, where we were able to retrieve some data. However, this data was not in the format we needed. After extensive research, we identified a comprehensive Olympic dataset on Kaggle that met our requirements, and we utilized this dataset for our Shiny app.
+
+#### 3.1 Cleaning the data for integrating in our app
+
+After obtaining the data , we cleaned it for using it in our app according to our needs, since we are focusing on particular season of olympics for our first two panels , we have used functions include in the library `dplyr` .
+
+## 4. Bias and Misinformation
+
+Yes, several potential sources of bias or misinformation could be present in an Olympic dataset, particularly one collected from secondary sources like Kaggle and Olympedia. Here are some key areas to consider:
+
+1.  **Sampling Bias**: If the dataset primarily includes data from certain events, years, or countries, it may not fully represent all participants or competitions. For instance, some lesser-known sports or smaller nations might have incomplete records, which could skew analyses toward more prominent countries or sports.
+
+2.  **Historical Data Inaccuracy**: Older records might be incomplete or based on inconsistent criteria for tracking athletic performance. Differences in data collection methods over time (e.g., changes in how age, weight, or nationality are recorded) can lead to inaccuracies.
+
+3.  **Selection Bias in Medal Winners’ Attributes**: The data on athletes’ age, weight, and height might focus primarily on medal winners, ignoring other competitors. This can create a biased view of the "ideal" attributes for certain sports, as it excludes those who didn't win medals but may still have valuable comparative data.
+
+4.  **Data Scraping Errors**: Since some data was scraped from websites like Olympedia, there may be inaccuracies or omissions due to errors during the scraping process. Automated scraping can sometimes miss certain details, particularly if websites update their structure or restrict access to certain information.
+
+5.  **Source Reliability and Data Verification**: Not all public sources verify data to the same extent as official Olympic organizations. If the dataset was compiled from multiple sources with varying levels of accuracy, it might include conflicting or outdated information.
+
+6.  **Data Entry and Formatting Errors**: Secondary datasets may contain human or machine entry errors, such as typos, missing values, or incorrect units (e.g., height in inches instead of centimeters). These can introduce inaccuracies in any calculations or visualizations derived from the data.
+
+7.  **Inconsistent Definitions of Medal Categories**: Some datasets may lack clarity on medal categories or events that have changed over time (e.g., sports added or removed from the Olympics), which can lead to inconsistencies in medal counts across different years.
+
+To address these biases, it's crucial to apply data validation and cross-check with official Olympic records whenever possible. Documenting these potential sources of bias in the report also ensures transparency for any analyses and interpretations based on the dataset.
+
+## 5. Potential Questions
+
+Here are some potential questions that can be asked
+
+1.  Which countries have won the most medals overall in the last ten years, and how do they compare between Summer and Winter Olympics?
+
+2.  What are the trends in medal counts over time for top-performing countries?
+
+3.  Which sports have produced the highest number of medal winners?
+
+4.  How do the age, weight, and height of medal-winning athletes vary by sport?
+
+5.  Are there noticeable differences in the physical attributes of athletes across different Olympic sports?
+
+6.  Which countries dominate specific sports or events in the Summer and Winter Olympics?
+
+7.  How has the gender representation of athletes changed over the past ten years?
+
+8.  Are there trends in the age range of medal winners over time, and does this vary by sport?
+
+These questions provide a solid foundation for analyzing trends, performance differences, and demographic insights in Olympic data
+
+## Important visualizations
+
+```{r}
+#| echo: false
+#| warning: false 
+library(shiny)
+library(ggplot2)
+library(GGally)
+library(patchwork)
+library(dplyr)
+library(plotly)
+library(shinythemes)
+load("../Data/Winter_games.Rdata")
+load("../Data/Summer_games.Rdata")
+load("../Data/sports_wise_medals_winter.Rdata")
+load("../Data/sports_wise_medals_summer.Rdata")
+load("../Data/year_sports_wise_medals_winter.Rdata")
+load("../Data/year_sports_wise_medals_summer.Rdata")
+load('../Data/trimmed_data.Rdata')
+load('../Data/GDP_Medals_final_data.Rdata')
+load('../Data/full_Data.Rdata')
+load('../Data/GDP_Countries.Rdata')
+
+# Olympic data constants
+host_cities <- c("Los Angeles", "Seoul", "Barcelona", "Atlanta", "Sydney",
+                 "Athina", "Beijing", "London", "Rio De Janeiro", "Tokyo")
+years_olympics <- c("1984", "1988", "1992", "1996", "2000", "2004", "2008", "2012", "2016", "2020")
+
+team_sports_excluded <- c("Artistic Swimming", "Basketball", "Equestrian Dressage", "Equestrian Eventing",
+                          "Equestrian Jumping", "Football", "Handball", "Hockey", "Modern Pentathlon", 
+                          "Rhythmic Gymnastics", "Volleyball", "Water Polo")
+
+scatter_plot = function(year_input){
+  gdp_data_year <- subset(GDP_data, Year == year_input)
+  gdp_effect_plot <- ggplot(gdp_data_year, aes(x = GDP, y = Medals, colour = Country)) +
+    geom_point() + scale_x_log10() + scale_y_log10() + theme(legend.position = 'none') +
+    labs(title = paste("Effect of GDP on Olympic Success in", year_input))
+    
+  
+  a = ggplotly(gdp_effect_plot)
+  return (a)
+}
+
+scatter_plot(2016)
+```
+
+"The following scatter plot shows that countries with higher GDP tend to have higher medal counts."
+
+```{r}
+#| echo: false
+#| warning: false 
+# Filter data for individual archery events
+filtered_event_data <- subset(data1, Events == "Archery" & Type == 'individual')
+
+# Create the ggpairs plot
+ggpairs(filtered_event_data, columns = c("Age", "Height", "Weight"), mapping = aes(colour = Medal, alpha = 0.7))
+
+```
+
+**Density Distributions by Medal Type**:
+
+-   **Age**: The distribution for age is relatively similar across medal types, with slight differences in peak age distributions. This suggests that age does not strongly differentiate medal types.
+
+-   **Height**: The distribution shows slight differences among medal types, where Gold and Silver medalists may lean toward being taller.
+
+-   **Weight**: The distribution of weight shows some variation among medal types, with Gold and Silver medalists having slightly higher weights than Bronze.
+
+    Such plot can be useful in answering the question,
+
+    ##### How do age, height, and weight relate to medal-winning performance?
+
+```{r}
+#| echo: false
+#| warning: false 
+index_year <- which(2016 == years_olympics, arr.ind = TRUE)
+    yearly_data <- all_data[[index_year]]
+    
+    ggplot(yearly_data[yearly_data$Type == 'individual' & !is.na(yearly_data$Gender),], aes(Events)) +
+      geom_histogram(aes(fill = Gender), binwidth = .1, stat = "count", 
+                     color = "black", size = .1) +
+      scale_fill_brewer(palette = "Spectral") +
+      labs(y = "Count", x = '') +
+      theme(axis.text.x = element_text(angle = 30, vjust = 0.5, hjust = 1)) + coord_flip() + labs(title = "Gender distribution for 2016 olympics")
+```
+
+```{r}
+#| echo: false
+#| warning: false 
+index_year <- which(1984 == years_olympics, arr.ind = TRUE)
+    yearly_data <- all_data[[index_year]]
+    
+    ggplot(yearly_data[yearly_data$Type == 'individual' & !is.na(yearly_data$Gender),], aes(Events)) +
+      geom_histogram(aes(fill = Gender), binwidth = .1, stat = "count", 
+                     color = "black", size = .1) +
+      scale_fill_brewer(palette = "Spectral") +
+      labs(y = "Count", x = '') +
+      theme(axis.text.x = element_text(angle = 30, vjust = 0.5, hjust = 1)) + coord_flip() + labs(title = "Gender distribution for 1984 olympics")
+```
+
+"The histogram above visualizes the changing gender distribution in Olympic sports over time. In some sports, the histogram shows a strong male dominance with little to no female representation, while in others, female participation has gradually increased. This histogram reveals shifts in gender participation, shedding light on sports where gender disparity has historically been significant.
+
+In the context of our Olympic Shiny app, this histogram can help answer several questions:
+
+1.  **How has gender representation in the Olympics evolved over time?**
+
+    -   Users can see if there are specific periods where female participation increased in the Olympics overall or in certain sports, helping them understand trends in gender inclusivity.
+
+2.  **Which sports have remained male-dominated, and which have seen an increase in female participants?**
+
+    -   By filtering the data by sport, users can explore sports that were male-dominated for years and those that have become more gender-inclusive.
+
+3.  **Are there particular years or Olympic events that mark significant shifts in female participation?**
+
+    -   Users can identify key years when female participation surged, possibly due to policy changes or societal shifts, helping them see milestones in the Olympics' journey toward gender equality.
+
+## Final Conclusions
+
+In conclusion, our app is not only interactive but also provides a basic look at how different factors might affect medal counts for countries, sports, and athletes. By combining data from different sources, the app lets users explore patterns in Olympic medal distribution. For example, users can see how certain countries tend to perform in specific sports or how historical trends and regional differences might play a role in success.
+
+While our analysis is just a starting point, it highlights some interesting connections that might affect how medals are distributed. With more data or advanced tools, future versions of the app could provide even deeper insights into what makes certain countries and athletes successful at the Olympics.
+
+## References
+
+-   <https://www.kaggle.com/datasets/heesoo37/120-years-of-olympic-history-athletes-and-results>
+
+-   <https://www.olympedia.org/>
+
+-   <https://github.com/SREESUBBARAYUDU/OLYMPIC_Data_Analysis/tree/main/Data>
+
+-   For shiny app:- <https://shiny.posit.co/>
